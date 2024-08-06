@@ -1,0 +1,66 @@
+networks:
+  db:
+  app:
+
+services:
+  app:
+    container_name: b2b-app
+    image: b2b-app-image
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.4'
+          memory: 100M
+    entrypoint:
+      - /app/manage.py
+    command:
+      - runserver
+      - 0.0.0.0:8000
+    networks:
+      - db
+      - app
+    ports:
+      - 8000:8000
+    volumes:
+      - ./b2btest:/app
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: b2b-db
+    image: mysql:9.0.1
+    env_file:
+      - ./.env
+    networks:
+      - db
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      interval: 1s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  adminer:
+    container_name: b2b-adminer
+    image: adminer
+    restart: always
+    networks:
+      - db
+    ports:
+      - 8080:8080
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db

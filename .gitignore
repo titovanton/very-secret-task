@@ -1,0 +1,14 @@
+*.log.*.txt
+*.log.txt
+*.pyc
+*DS_Store
+.env
+.mypy_cache
+.pytest_cache
+.venv
+__pycache__
+
+linter_runner.py
+mysql_data
+secrets
+static
