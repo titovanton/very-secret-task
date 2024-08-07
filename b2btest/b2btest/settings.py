@@ -13,9 +13,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# .env file
 SECRET_KEY: str = os.getenv('SECRET_KEY', '')
 ALLOWED_HOSTS: list[str] = os.getenv('ALLOWED_HOSTS', '').split(', ')
 DEBUG: bool = os.getenv('DEBUG', '').lower() == 'true'
@@ -34,6 +36,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # third party apps
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'django_extensions',
+    'corsheaders',
+
     # local apps
     'wallets.apps.WalletsConfig',
 ]
@@ -47,6 +56,39 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS':
+        'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # for test purpose
+
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+if DEBUG:
+    INSTALLED_APPS += [
+        'debug_toolbar',
+        'drf_spectacular',
+        'drf_spectacular_sidecar',
+    ]
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
+    REST_FRAMEWORK['DEFAULT_SCHEMA_CLASS'] = \
+        'drf_spectacular.openapi.AutoSchema'
+
+    SPECTACULAR_SETTINGS = {
+        'SWAGGER_UI_DIST': 'SIDECAR',
+        'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+        'REDOC_DIST': 'SIDECAR',
+
+        'TITLE': 'B2B Test Task',
+        'DESCRIPTION': 'May the money be with you! Amen.',
+        'VERSION': '1.0.0',
+        'SERVE_INCLUDE_SCHEMA': False,
+    }
 
 ROOT_URLCONF = 'b2btest.urls'
 
@@ -130,6 +172,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

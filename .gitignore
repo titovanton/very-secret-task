@@ -2,6 +2,7 @@
 *.log.txt
 *.pyc
 *DS_Store
+*sublime*
 .env
 .mypy_cache
 .pytest_cache
@@ -12,3 +13,5 @@ linter_runner.py
 mysql_data
 secrets
 static
+
+README.html

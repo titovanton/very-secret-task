@@ -1,16 +1,20 @@
+from typing import ClassVar
+
 from django.db import models
 
 
 class Wallet(models.Model):
     label = models.CharField(max_length=100)
     balance = models.DecimalField(
-        max_digits=20,
+        max_digits=40,
         decimal_places=18,
         default=0
     )
 
+    objects: ClassVar[models.Manager]
+
     def __str__(self):
-        return f'{self.label}:{self.balance}'
+        return f'{self.label}:{float(self.balance):.4f}'
 
 
 class Transaction(models.Model):
@@ -20,7 +24,9 @@ class Transaction(models.Model):
         on_delete=models.CASCADE
     )
     txid = models.CharField(max_length=100, unique=True)
-    amount = models.DecimalField(max_digits=20, decimal_places=18)
+    amount = models.DecimalField(max_digits=40, decimal_places=18)
+
+    objects: ClassVar[models.Manager]
 
     def __str__(self):
-        return f'{self.txid}:{self.amount}'
+        return f'{self.txid}:{float(self.amount):.4f}'

@@ -27,51 +27,57 @@ connection = MySQLdb.connect(
 cursor = connection.cursor()
 
 # django db creation
-cursor.execute(
-    f"""
+existence_sql = """
     SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA
-    WHERE SCHEMA_NAME = '{database_name}';
-    """
-)
-db_exists = cursor.fetchone()
+    WHERE SCHEMA_NAME = '{db_name}';
+"""
+db_creation_sql = """
+    CREATE DATABASE {db_name}
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+"""
+dbs = database_name, f'test_{database_name}'
 
-if db_exists:
-    print('Database exists.')
-else:
-    cursor.execute(
-        f"""
-        CREATE DATABASE IF NOT EXISTS {database_name}
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        """
-    )
-    print('Database created.')
+for db_name in dbs:
+    cursor.execute(existence_sql.format(db_name=db_name))
+    db_exists = cursor.fetchone()
+
+    if db_exists:
+        print(f'Database `{db_name}` exists.')
+    else:
+        cursor.execute(db_creation_sql.format(db_name=db_name))
+        print(f'Database `{db_name}`  created.')
+
 
 # django user creation
-cursor.execute(
-    f"""
+user_exists_sql = f"""
     SELECT COUNT(*) FROM mysql.user
     WHERE user = '{user_name}';
-    """
-)
+"""
+user_create_sql = f"""
+    CREATE USER '{user_name}'@'%'
+    IDENTIFIED BY '{user_password}';
+"""
+grant_sql = """
+    GRANT ALL PRIVILEGES ON {db_name}.*
+    TO '{user_name}'@'%';
+"""
+
+
+cursor.execute(user_exists_sql)
 user_exists = cursor.fetchone()[0]
 
 if user_exists:
-    print('User already exists.')
+    print(f'User `{user_name}` already exists.')
 else:
-    cursor.execute(
-        f"""
-        CREATE USER '{user_name}'@'%'
-        IDENTIFIED BY '{user_password}';
-        """
-    )
-    cursor.execute(
-        f"""
-        GRANT ALL PRIVILEGES ON {database_name}.*
-        TO '{user_name}'@'%';
-        """
-    )
-    cursor.execute('FLUSH PRIVILEGES;')
-    print('User created and privileges granted.')
+    cursor.execute(user_create_sql)
+    print(f'User `{user_name}` created.')
 
+for db_name in dbs:
+    cursor.execute(
+        grant_sql.format(db_name=db_name, user_name=user_name)
+    )
+    print(f'Privileges `{user_name}`->`{db_name}` granted.')
+
+cursor.execute('FLUSH PRIVILEGES;')
 cursor.close()
 connection.close()

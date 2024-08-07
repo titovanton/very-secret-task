@@ -30,13 +30,13 @@ WORKDIR /app
 COPY ./pyproject.toml /app
 COPY ./poetry.lock /app
 
-ARG BUILD_FOR
-RUN poetry install --no-interaction \
-    $(test "${BUILD_FOR}" != "dev" && echo "--no-dev")
-
 # I don't have C libs dependencies for this package on my
 # local macOS, so I'm adding them manually here.
 RUN poetry add mysqlclient:^2.2.4
+
+ARG BUILD_FOR
+RUN poetry install --no-interaction \
+    $(test "${BUILD_FOR}" != "dev" && echo "--no-dev")
 
 
 # ----------
@@ -68,6 +68,8 @@ WORKDIR /app
 
 COPY ./b2btest /app
 
+RUN DEBUG=True python3 /app/manage.py collectstatic --noinput
+
 RUN chown -R $USER_NAME:$USER_NAME /app
 
 USER $USER_NAME
@@ -84,5 +86,7 @@ ENV USER=$USER
 ENV PORT=$PORT
 ENV HOST=$HOST
 
-ENTRYPOINT ["gunicorn", "main.asgi:application"]
+EXPOSE $PORT
+
+ENTRYPOINT ["gunicorn", "b2btest.asgi:application"]
 CMD ["-c", "/app/gunicorn.conf.py"]
